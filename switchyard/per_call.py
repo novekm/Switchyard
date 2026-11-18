@@ -13,6 +13,7 @@ import hashlib
 import json
 import math
 from dataclasses import dataclass
+from typing import Any
 
 from switchyard.libsy import Step, algorithms
 
@@ -36,7 +37,7 @@ class PerCallRoute:
     picker: str = "efficient_first"
     confidence_threshold: float = 0.7
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if (
             type(self.route_id) is not str
             or not self.route_id
@@ -73,7 +74,9 @@ class PerCallRoute:
         ):
             raise ValueError("stage confidence must be finite and between zero and one")
 
-    async def decide(self, normalized_request: dict, eligible: tuple[str, ...]) -> CallDecision:
+    async def decide(
+        self, normalized_request: dict[str, Any], eligible: tuple[str, ...]
+    ) -> CallDecision:
         """Choose for this call, without reusing a previous session decision.
 
         A fresh native algorithm instance prevents algorithm session affinity
@@ -91,9 +94,10 @@ class PerCallRoute:
         models = {"any": list(eligible)}
         selectable = set(eligible)
         if self.strategy == "stage":
-            if not {self.efficient, self.capable} <= set(eligible):
+            efficient, capable = self.efficient, self.capable
+            if efficient is None or capable is None or not {efficient, capable} <= set(eligible):
                 raise ValueError("current policy/capabilities do not admit both stage roles")
-            models.update(efficient=[self.efficient], capable=[self.capable])
+            models.update(efficient=[efficient], capable=[capable])
             algorithm = algorithms.stage_router(
                 picker=self.picker,
                 confidence_threshold=self.confidence_threshold,
