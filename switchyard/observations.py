@@ -12,6 +12,7 @@ from __future__ import annotations
 import math
 from dataclasses import asdict, dataclass
 from threading import Lock
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -98,10 +99,10 @@ class RoutingObservations:
             self._rows[key] = observation
             return True
 
-    def snapshot(self, scope_id: str) -> dict:
+    def snapshot(self, scope_id: str) -> dict[str, Any]:
         with self._lock:
             rows = tuple(row for row in self._rows.values() if row.scope_id == scope_id)
-        targets: dict[str, dict] = {}
+        targets: dict[str, dict[str, Any]] = {}
         for row in rows:
             stats = targets.setdefault(
                 row.target_id,
